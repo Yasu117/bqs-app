@@ -20,13 +20,33 @@ export async function fetchVenues(): Promise<Venue[]> {
 }
 
 export async function createVenue(name: string): Promise<Venue> {
-  const { data, error } = await supabase
+  const { data: venue, error } = await supabase
     .from('venues')
     .insert({ name })
     .select()
     .single();
   if (error) throw error;
-  return data;
+
+  // デフォルトの初期メニューを登録
+  const defaultProducts = [
+    { venue_id: venue.id, name: 'アメリカーノ', category: 'コーヒー', price: 450, order_index: 1 },
+    { venue_id: venue.id, name: 'カフェラテ', category: 'コーヒー', price: 500, order_index: 2 },
+    { venue_id: venue.id, name: 'エスプレッソ', category: 'コーヒー', price: 400, order_index: 3 },
+    { venue_id: venue.id, name: 'ドリップコーヒー', category: 'コーヒー', price: 450, order_index: 4 },
+    { venue_id: venue.id, name: 'ティー', category: 'その他', price: 400, order_index: 5 },
+  ];
+  await supabase.from('products').insert(defaultProducts);
+
+  // デフォルトのオプションを登録
+  const defaultOptions = [
+    { venue_id: venue.id, name: 'ショット追加', price: 100 },
+    { venue_id: venue.id, name: 'ミルク変更（豆乳）', price: 50 },
+    { venue_id: venue.id, name: 'ミルク変更（オーツ）', price: 100 },
+    { venue_id: venue.id, name: 'シロップ追加（バニラ）', price: 50 },
+  ];
+  await supabase.from('product_options').insert(defaultOptions);
+
+  return venue;
 }
 
 export async function updateVenueName(id: string, name: string): Promise<void> {
