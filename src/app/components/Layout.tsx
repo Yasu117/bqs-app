@@ -12,7 +12,7 @@ export function Layout() {
 
   useEffect(() => {
     fetchVenues().then(setVenues).catch(console.error);
-  }, []);
+  }, [location.pathname]);
 
   const navItems = [
     { key: 'order', icon: ClipboardList, label: '注文' },
