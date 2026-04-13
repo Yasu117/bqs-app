@@ -29,20 +29,43 @@ export async function createVenue(name: string): Promise<Venue> {
 
   // デフォルトの初期メニューを登録
   const defaultProducts = [
-    { venue_id: venue.id, name: 'アメリカーノ', category: 'コーヒー', price: 450, order_index: 1 },
-    { venue_id: venue.id, name: 'カフェラテ', category: 'コーヒー', price: 500, order_index: 2 },
-    { venue_id: venue.id, name: 'エスプレッソ', category: 'コーヒー', price: 400, order_index: 3 },
-    { venue_id: venue.id, name: 'ドリップコーヒー', category: 'コーヒー', price: 450, order_index: 4 },
-    { venue_id: venue.id, name: 'ティー', category: 'その他', price: 400, order_index: 5 },
+    // コーヒー
+    { venue_id: venue.id, name: 'エスプレッソ', category: 'コーヒー', price: 400, order_index: 1 },
+    { venue_id: venue.id, name: 'アメリカーノ', category: 'コーヒー', price: 450, order_index: 2 },
+    { venue_id: venue.id, name: 'ドリップコーヒー', category: 'コーヒー', price: 450, order_index: 3 },
+    // ミルク系
+    { venue_id: venue.id, name: 'カフェラテ', category: 'ミルク系', price: 500, order_index: 4 },
+    { venue_id: venue.id, name: 'カプチーノ', category: 'ミルク系', price: 500, order_index: 5 },
+    { venue_id: venue.id, name: 'フラットホワイト', category: 'ミルク系', price: 500, order_index: 6 },
+    { venue_id: venue.id, name: 'カフェモカ', category: 'ミルク系', price: 550, order_index: 7 },
+    { venue_id: venue.id, name: 'キャラメルラテ', category: 'ミルク系', price: 550, order_index: 8 },
+    // アレンジ系
+    { venue_id: venue.id, name: 'バニララテ', category: 'アレンジ系', price: 550, order_index: 9 },
+    { venue_id: venue.id, name: 'ヘーゼルナッツラテ', category: 'アレンジ系', price: 550, order_index: 10 },
+    { venue_id: venue.id, name: 'ハニーラテ', category: 'アレンジ系', price: 550, order_index: 11 },
+    // その他ドリンク
+    { venue_id: venue.id, name: '紅茶', category: 'その他ドリンク', price: 400, order_index: 12 },
+    { venue_id: venue.id, name: 'チャイラテ', category: 'その他ドリンク', price: 500, order_index: 13 },
+    { venue_id: venue.id, name: '抹茶ラテ', category: 'その他ドリンク', price: 500, order_index: 14 },
+    { venue_id: venue.id, name: 'ココア', category: 'その他ドリンク', price: 450, order_index: 15 },
+    // ノンカフェイン
+    { venue_id: venue.id, name: 'デカフェコーヒー', category: 'ノンカフェイン', price: 500, order_index: 16 },
+    { venue_id: venue.id, name: 'デカフェラテ', category: 'ノンカフェイン', price: 550, order_index: 17 },
   ];
   await supabase.from('products').insert(defaultProducts);
 
   // デフォルトのオプションを登録
   const defaultOptions = [
-    { venue_id: venue.id, name: 'ショット追加', price: 100 },
+    { venue_id: venue.id, name: 'ミルク変更（牛乳）', price: 0 },
     { venue_id: venue.id, name: 'ミルク変更（豆乳）', price: 50 },
-    { venue_id: venue.id, name: 'ミルク変更（オーツ）', price: 100 },
+    { venue_id: venue.id, name: 'ミルク変更（オーツミルク）', price: 100 },
+    { venue_id: venue.id, name: 'ミルク多め', price: 0 },
+    { venue_id: venue.id, name: 'ミルク少なめ', price: 0 },
+    { venue_id: venue.id, name: 'ショット追加', price: 100 },
     { venue_id: venue.id, name: 'シロップ追加（バニラ）', price: 50 },
+    { venue_id: venue.id, name: 'シロップ追加（キャラメル）', price: 50 },
+    { venue_id: venue.id, name: 'シロップ追加（ヘーゼルナッツ）', price: 50 },
+    { venue_id: venue.id, name: 'ホイップ追加', price: 50 },
   ];
   await supabase.from('product_options').insert(defaultOptions);
 
