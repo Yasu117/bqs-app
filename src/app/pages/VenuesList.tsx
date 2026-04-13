@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { supabase } from '../../lib/supabase';
+import { fetchVenues as apiFetchVenues, createVenue } from '../../lib/api';
 import { Venue } from '../types';
 
 export function VenuesList() {
@@ -15,13 +16,8 @@ export function VenuesList() {
 
   const fetchVenues = async () => {
     try {
-      const { data, error } = await supabase
-        .from('venues')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setVenues(data || []);
+      const data = await apiFetchVenues();
+      setVenues(data);
     } catch (err) {
       console.error('Error fetching venues:', err);
     } finally {
@@ -34,13 +30,7 @@ export function VenuesList() {
     if (!newVenueName.trim()) return;
 
     try {
-      const { data, error } = await supabase
-        .from('venues')
-        .insert([{ name: newVenueName.trim() }])
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await createVenue(newVenueName.trim());
       setVenues([data, ...venues]);
       setNewVenueName('');
     } catch (err) {
