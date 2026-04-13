@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useParams, useNavigate } from 'react-router';
-import { ClipboardList, ListOrdered, BarChart3, Settings } from 'lucide-react';
+import { ClipboardList, ListOrdered, BarChart3, ChevronLeft, Store, Settings } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { fetchVenues } from '../../lib/api';
 import { Venue } from '../types';
@@ -15,6 +15,7 @@ export function Layout() {
   }, [location.pathname]);
 
   const navItems = [
+    { key: 'venues', icon: Store, label: '会場' },
     { key: 'order', icon: ClipboardList, label: '注文' },
     { key: 'queue', icon: ListOrdered, label: 'キュー' },
     { key: 'history', icon: BarChart3, label: '集計' },
@@ -27,6 +28,13 @@ export function Layout() {
       {/* ヘッダー（会場ページのみ表示） */}
       {isVenuePage && (
         <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2">
+          <button
+            onClick={() => navigate('/')}
+            className="p-2 hover:bg-gray-100 rounded text-gray-600"
+            title="会場選択に戻る"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
           <select
             value={venueId}
             onChange={(e) => {
@@ -45,9 +53,10 @@ export function Layout() {
           </select>
           <button
             onClick={() => navigate(`/v/${venueId}/settings`)}
-            className="p-2 hover:bg-gray-100 rounded"
+            className="p-2 hover:bg-gray-100 rounded text-gray-600 focus:outline-none"
+            title="メニュー・オプション設定"
           >
-            <Settings className="w-5 h-5 text-gray-600" />
+            <Settings className="w-5 h-5" />
           </button>
         </header>
       )}
@@ -57,31 +66,49 @@ export function Layout() {
         <Outlet />
       </div>
 
-      {/* ボトムナビゲーション（会場ページのみ） */}
-      {isVenuePage && (
-        <nav className="bg-white border-t border-gray-300" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          <div className="flex">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const path = `/v/${venueId}/${item.key}`;
-              const isActive = location.pathname.startsWith(path);
+      {/* ボトムナビゲーション（常時表示） */}
+      <nav className="bg-white border-t border-gray-200 shrink-0 select-none z-50 w-full" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex max-w-2xl mx-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            
+            // 会場タブは / へのパス。それ以外は venueId があれば各機能へのパス。
+            const path = item.key === 'venues' 
+              ? '/' 
+              : venueId 
+                ? `/v/${venueId}/${item.key}` 
+                : '#';
+                
+            const isActive = item.key === 'venues'
+              ? location.pathname === '/'
+              : location.pathname.startsWith(`/v/${venueId}/${item.key}`);
+              
+            const isDisabled = !venueId && item.key !== 'venues';
 
-              return (
-                <Link
-                  key={item.key}
-                  to={path}
-                  className={`flex-1 flex flex-col items-center justify-center py-3 ${
-                    isActive ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <Icon className="w-6 h-6 mb-1" />
-                  <span className="text-xs">{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      )}
+            return (
+              <Link
+                key={item.key}
+                to={path}
+                onClick={(e) => {
+                  if (isDisabled) e.preventDefault();
+                }}
+                className={`flex-1 flex flex-col items-center justify-center py-3.5 transition-all duration-200 ${
+                  isDisabled
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : isActive
+                      ? 'text-black'
+                      : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className={`w-6 h-6 mb-1 ${isActive && !isDisabled ? 'stroke-[2.5px]' : ''}`} />
+                <span className={`text-[10px] tracking-wide ${isActive && !isDisabled ? 'font-bold' : 'font-medium'}`}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

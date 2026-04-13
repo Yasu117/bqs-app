@@ -6,7 +6,7 @@ export function SettingsPage() {
   const navigate = useNavigate();
 
   if (!venueId) {
-    navigate('/venues');
+    navigate('/');
     return null;
   }
 

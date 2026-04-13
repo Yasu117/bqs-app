@@ -45,7 +45,7 @@ export function OrderInput() {
   }, [loadData]);
 
   if (!venueId) {
-    navigate('/venues');
+    navigate('/');
     return null;
   }
 

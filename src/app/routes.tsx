@@ -11,8 +11,7 @@ export const router = createBrowserRouter([
     path: '/',
     Component: Layout,
     children: [
-      { index: true, element: <Navigate to="/venues" replace /> },
-      { path: 'venues', element: <VenuesList /> },
+      { index: true, Component: VenuesList },
       {
         path: 'v/:venueId',
         children: [

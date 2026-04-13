@@ -80,6 +80,14 @@ export async function updateVenueName(id: string, name: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function deleteVenue(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('venues')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+}
+
 // ─────────────────────────────────────────────
 // Products
 // ─────────────────────────────────────────────

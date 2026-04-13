@@ -44,7 +44,7 @@ export function DailySummary() {
   }, [loadOrders]);
 
   if (!venueId) {
-    navigate('/venues');
+    navigate('/');
     return null;
   }
 
