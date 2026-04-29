@@ -24,7 +24,7 @@ export function QueueDisplay() {
         .from('orders')
         .select('*, items:order_items(*, options:order_item_options(*))')
         .eq('venue_id', venueId)
-        .order('ordered_at', { ascending: false });
+        .order('ordered_at', { ascending: true });
       
       if (error) throw error;
 
