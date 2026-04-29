@@ -129,6 +129,23 @@ export async function updateProduct(
   if (error) throw error;
 }
 
+export async function updateProductOrderIndexes(
+  updates: Pick<Product, 'id' | 'order_index'>[],
+): Promise<void> {
+  if (updates.length === 0) return;
+
+  const tasks = updates.map(({ id, order_index }) =>
+    supabase
+      .from('products')
+      .update({ order_index })
+      .eq('id', id),
+  );
+
+  const results = await Promise.all(tasks);
+  const failed = results.find((result) => result.error);
+  if (failed?.error) throw failed.error;
+}
+
 export async function deleteProduct(productId: string): Promise<void> {
   const { error } = await supabase
     .from('products')

@@ -1,12 +1,88 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
+import { useDrag, useDrop } from 'react-dnd';
+import { GripVertical } from 'lucide-react';
 import { ProductButton } from '../components/ProductButton';
 import { SelectedOrderItem } from '../components/SelectedOrderItem';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { OptionModal } from '../components/OptionModal';
-import { fetchProducts, fetchProductOptions, createOrder } from '../../lib/api';
+import { fetchProducts, fetchProductOptions, createOrder, updateProductOrderIndexes } from '../../lib/api';
 import { Product, ProductOption, DraftOrderItem } from '../types';
 import { toast } from 'sonner';
+
+const DND_TYPE_PRODUCT = 'PRODUCT_ITEM';
+
+type DragItem = {
+  id: string;
+  category: string;
+};
+
+type DraggableProductItemProps = {
+  product: Product;
+  onClick: (product: Product) => void;
+  moveItem: (dragId: string, hoverId: string, category: string) => void;
+  saveOrder: (category: string) => Promise<void>;
+};
+
+function DraggableProductItem({
+  product,
+  onClick,
+  moveItem,
+  saveOrder,
+}: DraggableProductItemProps) {
+  const [{ isDragging }, dragRef] = useDrag(() => ({
+    type: DND_TYPE_PRODUCT,
+    item: { id: product.id, category: product.category || 'その他' },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }), [product.id, product.category]);
+
+  const [, dropRef] = useDrop(() => ({
+    accept: DND_TYPE_PRODUCT,
+    hover: (item: DragItem) => {
+      const thisCategory = product.category || 'その他';
+      if (item.id === product.id || item.category !== thisCategory) return;
+      moveItem(item.id, product.id, thisCategory);
+    },
+    drop: async (item: DragItem) => {
+      const thisCategory = product.category || 'その他';
+      if (item.category !== thisCategory) return;
+      await saveOrder(thisCategory);
+    },
+  }), [product.id, product.category, moveItem, saveOrder]);
+
+  return (
+    <button
+      ref={dropRef}
+      onClick={() => onClick(product)}
+      className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-left flex justify-between items-center group"
+      style={{ opacity: isDragging ? 0.5 : 1 }}
+    >
+      <div>
+        <div className="text-lg font-bold text-gray-800 group-hover:text-blue-600 border-b-2 border-transparent group-hover:border-blue-100 inline-block transition-colors">
+          {product.name}
+        </div>
+        <div className="text-sm text-gray-500 mt-1">¥{product.price.toLocaleString()}</div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="bg-gray-50 text-gray-400 p-2 rounded-full group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+          追加
+        </div>
+        <span
+          ref={dragRef}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing p-1"
+          aria-label="並び替え"
+          title="ドラッグして並び替え"
+        >
+          <GripVertical size={18} />
+        </span>
+      </div>
+    </button>
+  );
+}
 
 export function OrderInput() {
   const { venueId } = useParams<{ venueId: string }>();
@@ -64,6 +140,62 @@ export function OrderInput() {
   const handleProductClick = (product: Product) => {
     setSelectingProduct(product);
   };
+
+  const reorderProductsInCategory = useCallback(
+    (sourceProducts: Product[], dragId: string, hoverId: string, category: string): Product[] => {
+      const dragIndex = sourceProducts.findIndex((p) => p.id === dragId);
+      const hoverIndex = sourceProducts.findIndex((p) => p.id === hoverId);
+      if (dragIndex < 0 || hoverIndex < 0 || dragIndex === hoverIndex) return sourceProducts;
+
+      const dragged = sourceProducts[dragIndex];
+      const hovered = sourceProducts[hoverIndex];
+      if ((dragged.category || 'その他') !== category || (hovered.category || 'その他') !== category) {
+        return sourceProducts;
+      }
+
+      const next = [...sourceProducts];
+      const [moved] = next.splice(dragIndex, 1);
+      next.splice(hoverIndex, 0, moved);
+
+      const categoryProducts = next
+        .filter((p) => (p.category || 'その他') === category)
+        .sort((a, b) => a.order_index - b.order_index);
+      const categoryIndexes = categoryProducts
+        .map((p) => p.order_index)
+        .sort((a, b) => a - b);
+      const categoryOrder = next.filter((p) => (p.category || 'その他') === category);
+      const reassigned = new Map<string, number>();
+      categoryOrder.forEach((p, i) => {
+        reassigned.set(p.id, categoryIndexes[i] ?? p.order_index);
+      });
+
+      return next.map((p) => (
+        reassigned.has(p.id) ? { ...p, order_index: reassigned.get(p.id)! } : p
+      ));
+    },
+    [],
+  );
+
+  const handleMoveItem = useCallback((dragId: string, hoverId: string, category: string) => {
+    setProducts((prev) => reorderProductsInCategory(prev, dragId, hoverId, category));
+  }, [reorderProductsInCategory]);
+
+  const handleSaveCategoryOrder = useCallback(async (category: string) => {
+    const previousProducts = products;
+    const categoryProducts = products
+      .filter((p) => (p.category || 'その他') === category)
+      .sort((a, b) => a.order_index - b.order_index);
+
+    const updates = categoryProducts.map((p) => ({ id: p.id, order_index: p.order_index }));
+
+    try {
+      await updateProductOrderIndexes(updates);
+    } catch (err) {
+      console.error('商品並び順の保存エラー:', err);
+      setProducts(previousProducts);
+      toast.error('並び順の保存に失敗しました');
+    }
+  }, [products]);
 
   // オプション決定時
   const handleConfirmOptions = (selected: ProductOption[]) => {
@@ -132,21 +264,13 @@ export function OrderInput() {
                 </h2>
                 <div className="grid gap-4">
                   {prods.map((product) => (
-                    <button
+                    <DraggableProductItem
                       key={product.id}
-                      onClick={() => handleProductClick(product)}
-                      className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-left flex justify-between items-center group"
-                    >
-                      <div>
-                        <div className="text-lg font-bold text-gray-800 group-hover:text-blue-600 border-b-2 border-transparent group-hover:border-blue-100 inline-block transition-colors">
-                          {product.name}
-                        </div>
-                        <div className="text-sm text-gray-500 mt-1">¥{product.price.toLocaleString()}</div>
-                      </div>
-                      <div className="bg-gray-50 text-gray-400 p-2 rounded-full group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                        追加
-                      </div>
-                    </button>
+                      product={product}
+                      onClick={handleProductClick}
+                      moveItem={handleMoveItem}
+                      saveOrder={handleSaveCategoryOrder}
+                    />
                   ))}
                 </div>
               </div>
