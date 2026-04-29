@@ -9,6 +9,7 @@ export default function App() {
     <DndProvider
       backend={TouchBackend}
       options={{
+        delayTouchStart: 200,
         enableMouseEvents: true,
       }}
     >

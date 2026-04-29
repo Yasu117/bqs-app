@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useDrag, useDrop } from 'react-dnd';
-import { GripVertical } from 'lucide-react';
 import { ProductButton } from '../components/ProductButton';
 import { SelectedOrderItem } from '../components/SelectedOrderItem';
 import { SettingsPanel } from '../components/SettingsPanel';
@@ -54,10 +53,17 @@ function DraggableProductItem({
 
   return (
     <button
-      ref={dropRef}
+      ref={(node) => dragRef(dropRef(node))}
       onClick={() => onClick(product)}
-      className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-left flex justify-between items-center group"
-      style={{ opacity: isDragging ? 0.5 : 1 }}
+      className={`bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-300 transition-all text-left flex justify-between items-center group select-none ${
+        isDragging
+          ? 'opacity-90 shadow-xl scale-105 z-10'
+          : 'shadow-sm hover:shadow-md'
+      }`}
+      style={{
+        WebkitTouchCallout: 'none',
+        userSelect: 'none',
+      }}
     >
       <div>
         <div className="text-lg font-bold text-gray-800 group-hover:text-blue-600 border-b-2 border-transparent group-hover:border-blue-100 inline-block transition-colors">
@@ -69,17 +75,6 @@ function DraggableProductItem({
         <div className="bg-gray-50 text-gray-400 p-2 rounded-full group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
           追加
         </div>
-        <span
-          ref={dragRef}
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing p-1"
-          style={{ touchAction: 'none' }}
-          aria-label="並び替え"
-          title="ドラッグして並び替え"
-        >
-          <GripVertical size={18} />
-        </span>
       </div>
     </button>
   );
