@@ -74,6 +74,7 @@ function DraggableProductItem({
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing p-1"
+          style={{ touchAction: 'none' }}
           aria-label="並び替え"
           title="ドラッグして並び替え"
         >
